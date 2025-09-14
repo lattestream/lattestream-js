@@ -1,0 +1,31 @@
+{
+  "name": "lattestream-js",
+  "private": false,
+  "description": "LatteStream JavaScript/TypeScript SDK monorepo",
+  "keywords": [
+    "websocket",
+    "realtime",
+    "sdk",
+    "lattestream"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lattestream/lattestream-js.git"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
