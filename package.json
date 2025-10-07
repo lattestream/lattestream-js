@@ -1,6 +1,6 @@
 {
   "name": "lattestream-js",
-  "private": false,
+  "private": true,
   "description": "LatteStream JavaScript/TypeScript SDK monorepo",
   "keywords": [
     "websocket",
@@ -18,7 +18,9 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "prepublishOnly": "pnpm build",
+    "publish:packages": "pnpm -r publish --access public"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

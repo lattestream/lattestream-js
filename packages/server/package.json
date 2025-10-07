@@ -13,7 +13,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "keywords": [
     "lattestream",
@@ -21,9 +22,25 @@
     "realtime",
     "server",
     "nodejs",
-    "deno"
+    "deno",
+    "pusher",
+    "channels",
+    "authentication"
   ],
+  "author": "LatteStream",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lattestream/lattestream-js.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/lattestream/lattestream-js/issues"
+  },
+  "homepage": "https://github.com/lattestream/lattestream-js#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "typecheck": "tsc --noEmit",
