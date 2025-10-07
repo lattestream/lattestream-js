@@ -18,15 +18,11 @@ export class ServerAuthorizer {
     }
 
     const auth = this.encryptionHelper.generateAuthString(socketId, channelName);
-    
+
     return { auth };
   }
 
-  authorizePresenceChannel(
-    socketId: string, 
-    channelName: string, 
-    userData: any
-  ): AuthenticationResult {
+  authorizePresenceChannel(socketId: string, channelName: string, userData: any): AuthenticationResult {
     if (!channelName.startsWith('presence-')) {
       throw new Error(`Channel ${channelName} is not a presence channel`);
     }
@@ -45,10 +41,10 @@ export class ServerAuthorizer {
 
     const channelData = JSON.stringify(userData);
     const auth = this.encryptionHelper.generateAuthString(socketId, channelName, channelData);
-    
-    return { 
+
+    return {
       auth,
-      channelData 
+      channelData,
     };
   }
 
@@ -64,7 +60,7 @@ export class ServerAuthorizer {
     const userAuthData = {
       socket_id: socketId,
       user_data: userData,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     return this.encryptionHelper.generateAuthString(socketId, 'user-auth', JSON.stringify(userAuthData));
@@ -101,11 +97,7 @@ export class ServerAuthorizer {
   }
 }
 
-export function createChannelAuthMiddleware(
-  appKey: string,
-  masterKey: string,
-  getUserData?: (req: any) => any
-) {
+export function createChannelAuthMiddleware(appKey: string, masterKey: string, getUserData?: (req: any) => any) {
   const authorizer = new ServerAuthorizer(appKey, masterKey);
 
   return (req: any, res: any, next?: () => void) => {
@@ -114,7 +106,7 @@ export function createChannelAuthMiddleware(
 
       if (!socket_id || !channel_name) {
         return res.status(400).json({
-          error: 'socket_id and channel_name are required'
+          error: 'socket_id and channel_name are required',
         });
       }
 
@@ -127,12 +119,12 @@ export function createChannelAuthMiddleware(
         result = authorizer.authorizeChannel(socket_id, channel_name);
       } else {
         return res.status(400).json({
-          error: 'Only private and presence channels require authorization'
+          error: 'Only private and presence channels require authorization',
         });
       }
 
       res.json(result);
-      
+
       if (next) next();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Authorization failed';

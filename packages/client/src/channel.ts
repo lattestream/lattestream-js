@@ -8,7 +8,7 @@ export abstract class Channel {
   constructor(
     public readonly name: string,
     protected send: (data: any) => boolean,
-    public readonly options: LatteStreamOptions,
+    public readonly options: LatteStreamOptions
   ) {}
 
   abstract getType(): ChannelType;
@@ -27,7 +27,7 @@ export abstract class Channel {
 
   trigger(eventName: string, data?: any): boolean {
     this.log(
-      `[LatteStream Channel] trigger called for ${this.name}, subscribed: ${this.subscribed}, event: ${eventName}`,
+      `[LatteStream Channel] trigger called for ${this.name}, subscribed: ${this.subscribed}, event: ${eventName}`
     );
     if (!this.subscribed) {
       this.log(`[LatteStream Channel] trigger failed - channel ${this.name} not subscribed`);
@@ -64,13 +64,11 @@ export abstract class Channel {
           return parsed;
         } catch (error) {
           this.log(`[LatteStream Channel] Failed to parse JSON data for ${this.name}:`, error);
-          // Return original string if parsing fails
           return data;
         }
       }
     }
 
-    // Return data as-is if it's not a JSON string
     return data;
   }
 
@@ -92,7 +90,6 @@ export abstract class Channel {
 
     if (sent) {
       this.log(`[LatteStream Channel] Sent subscription for ${this.name}`);
-      // Don't set subscribed = true here - wait for subscription_succeeded event
     } else {
       this.log(`[LatteStream Channel] Failed to send subscription for ${this.name} - connection not ready`);
     }
@@ -137,7 +134,7 @@ export class PrivateChannel extends Channel {
     name: string,
     send: (data: any) => boolean,
     protected authorize: (channelName: string, socketId: string) => Promise<string>,
-    options: LatteStreamOptions = {},
+    options: LatteStreamOptions = {}
   ) {
     super(name, send, options);
   }
@@ -185,7 +182,7 @@ export class PresenceChannel extends PrivateChannel {
     (member) => {
       member.id = '';
       member.info = undefined;
-    },
+    }
   );
 
   getType(): ChannelType {
@@ -212,7 +209,6 @@ export class PresenceChannel extends PrivateChannel {
   }
 
   handleSubscriptionSucceeded(data?: any): void {
-    // Parse the data first to ensure we have a proper object
     const parsedData = this.parseEventData(data);
 
     if (parsedData && parsedData.presence) {

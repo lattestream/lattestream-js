@@ -15,7 +15,7 @@ export class MessageQueue {
 
   enqueue(message: any): void {
     this.queue.push(message);
-    
+
     if (this.queue.length >= this.batchSize) {
       this.flush();
     } else if (!this.flushTimer) {
@@ -32,13 +32,13 @@ export class MessageQueue {
     if (this.queue.length === 0) return;
 
     const messages = this.queue.splice(0);
-    
+
     if (messages.length === 1) {
       this.sender(messages[0]);
     } else {
       this.sender({
         event: 'lattestream:batch',
-        data: { messages }
+        data: { messages },
       });
     }
   }
@@ -60,7 +60,7 @@ export class ObjectPool<T> {
   constructor(factory: () => T, reset: (obj: T) => void, initialSize = 10) {
     this.factory = factory;
     this.reset = reset;
-    
+
     for (let i = 0; i < initialSize; i++) {
       this.pool.push(factory());
     }
@@ -73,7 +73,8 @@ export class ObjectPool<T> {
 
   release(obj: T): void {
     this.reset(obj);
-    if (this.pool.length < 50) { // Cap pool size
+    if (this.pool.length < 50) {
+      // Cap pool size
       this.pool.push(obj);
     }
   }
@@ -139,17 +140,14 @@ export class FastEventEmitter {
   }
 }
 
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: number | null = null;
-  
+
   return (...args: Parameters<T>) => {
     if (timeout !== null) {
       clearTimeout(timeout);
     }
-    
+
     timeout = window.setTimeout(() => {
       timeout = null;
       func(...args);
@@ -157,17 +155,14 @@ export function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
+export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void {
   let inThrottle = false;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -178,7 +173,7 @@ export class PerformanceMonitor {
 
   startTiming(label: string): () => void {
     const start = performance.now();
-    
+
     return () => {
       const duration = performance.now() - start;
       this.addMetric(label, duration);
@@ -189,10 +184,10 @@ export class PerformanceMonitor {
     if (!this.metrics.has(label)) {
       this.metrics.set(label, []);
     }
-    
+
     const samples = this.metrics.get(label)!;
     samples.push(value);
-    
+
     if (samples.length > this.maxSamples) {
       samples.shift();
     }
@@ -207,7 +202,7 @@ export class PerformanceMonitor {
       avg: sum / samples.length,
       min: Math.min(...samples),
       max: Math.max(...samples),
-      count: samples.length
+      count: samples.length,
     };
   }
 

@@ -49,7 +49,6 @@ export interface WebhookEvent {
   }>;
 }
 
-
 export interface ServerEvent {
   channel: string;
   event: string;

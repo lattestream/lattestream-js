@@ -4,7 +4,7 @@ export class Authorizer {
   constructor(
     private authEndpoint: string,
     private defaultAuthOptions: AuthOptions = {},
-    private options: LatteStreamOptions = {},
+    private options: LatteStreamOptions = {}
   ) {}
 
   async authorize(channelName: string, socketId: string, authOptions?: AuthOptions): Promise<string> {
@@ -56,7 +56,7 @@ export class Authorizer {
     channelName: string,
     socketId: string,
     userData: any,
-    authOptions?: AuthOptions,
+    authOptions?: AuthOptions
   ): Promise<{ auth: string; channelData?: string }> {
     const options = { ...this.defaultAuthOptions, ...authOptions };
 

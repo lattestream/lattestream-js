@@ -19,7 +19,6 @@ export class LatteStreamServer {
   private makeRequestWithRetry: typeof this.makeApiRequest;
 
   constructor(private encryptedSecret: string, private options: LatteStreamServerOptions = {}) {
-    // Validate that it's an encrypted secret
     if (!encryptedSecret.startsWith('lsk_')) {
       throw new Error('Invalid encrypted secret: must start with lsk_');
     }
@@ -166,7 +165,6 @@ export class LatteStreamServer {
 
     await this.makeRequestWithRetry('POST', `/users/${encodeURIComponent(userId)}/terminate_connections`);
 
-    // Clear cache entries for this user
     this.requestCache.clear();
   }
 
@@ -176,32 +174,6 @@ export class LatteStreamServer {
 
   verifyWebhookSignature(payload: string, signature: string): boolean {
     return this.encryptionHelper.verifyWebhookSignature(payload, signature);
-  }
-
-  async generateClientToken(
-    socketId: string,
-    permissions?: string[],
-    expiresIn?: number
-  ): Promise<ClientTokenResponse> {
-    if (!socketId || typeof socketId !== 'string') {
-      throw new Error('Socket ID is required and must be a string');
-    }
-
-    const tokenRequest: ClientTokenRequest = {
-      apiKey: this.encryptedSecret,
-      socketId,
-      permissions,
-      expiresIn: expiresIn || 1800, // Default 30 minutes
-    };
-
-    const response = await this.makeTokenRequest(tokenRequest);
-
-    return {
-      accessToken: response.access_token,
-      tokenType: response.token_type,
-      expiresIn: response.expires_in,
-      tenantId: response.tenant_id,
-    };
   }
 
   async authorizeChannel(
@@ -219,14 +191,12 @@ export class LatteStreamServer {
 
     this.validateChannels([channelName]);
 
-    // For private and presence channels, we need to call the auth endpoint
     if (channelName.startsWith('private-') || channelName.startsWith('presence-')) {
       const payload: any = {
         socket_id: socketId,
         channel_name: channelName,
       };
 
-      // For presence channels, include user data
       if (channelName.startsWith('presence-') && userData) {
         payload.channel_data = JSON.stringify(userData);
       }
@@ -244,7 +214,6 @@ export class LatteStreamServer {
       return result;
     }
 
-    // For public channels, no authorization needed
     throw new Error('Public channels do not require authorization');
   }
 
@@ -331,7 +300,7 @@ export class LatteStreamServer {
   }
 
   private async makeTokenRequest(tokenRequest: ClientTokenRequest): Promise<any> {
-    const tokenEndpoint = this.buildTokenEndpoint();
+    const tokenEndpoint = this.buildApiEndpoint();
     const timeout = this.options.timeout || 30000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -373,20 +342,11 @@ export class LatteStreamServer {
     }
   }
 
-  private buildTokenEndpoint(): string {
-    const protocol = this.options.useTLS !== false ? 'https' : 'http';
-    const cluster = this.options.cluster || 'eu1';
-    const endpoint = this.options.wsEndpoint || `${cluster}.lattestream.com`;
-
-    return `${protocol}://${endpoint}`;
-  }
-
   private buildApiEndpoint(): string {
     const protocol = this.options.useTLS !== false ? 'https' : 'http';
     const cluster = this.options.cluster || 'eu1';
     const endpoint = this.options.wsEndpoint || `${cluster}.lattestream.com`;
 
-    // No app-specific endpoint needed since tenant_id/key_id are in the encrypted secret
     return `${protocol}://${endpoint}`;
   }
 
@@ -419,11 +379,5 @@ export class LatteStreamServer {
         throw new Error(`Invalid channel name: ${channel}`);
       }
     });
-  }
-
-  private log(...args: any[]): void {
-    if (this.options.enableLogging) {
-      console.log('[LatteStreamServer]', ...args);
-    }
   }
 }

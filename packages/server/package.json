@@ -15,7 +15,14 @@
   "files": [
     "dist"
   ],
-  "keywords": ["lattestream", "websocket", "realtime", "server", "nodejs", "deno"],
+  "keywords": [
+    "lattestream",
+    "websocket",
+    "realtime",
+    "server",
+    "nodejs",
+    "deno"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",

@@ -43,12 +43,7 @@ export interface PresenceChannelData {
   user_info?: Record<string, any>;
 }
 
-export type ConnectionState = 
-  | 'connecting'
-  | 'connected'
-  | 'disconnected'
-  | 'unavailable'
-  | 'failed';
+export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'unavailable' | 'failed';
 
 export type ChannelType = 'public' | 'private' | 'presence';
 

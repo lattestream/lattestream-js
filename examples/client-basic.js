@@ -32,7 +32,7 @@ const lattestream = new LatteStream(accessToken, {
 // Option 3: Legacy app key authentication (for backward compatibility)
 /*
 const lattestream = new LatteStream('your-legacy-app-key', {
-  cluster: 'us-east-1',
+  cluster: 'eu1',
   forceTLS: true,
   enableLogging: true,
   authEndpoint: '/auth' // Required for private/presence channels

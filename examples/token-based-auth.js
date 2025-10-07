@@ -10,7 +10,7 @@ app.use(express.json());
 const lattestream = new LatteStreamServer(
   'lsk_your_encrypted_secret_here', // Encrypted secret (contains tenant_id and key_id)
   {
-    cluster: 'us-east-1',
+    cluster: 'eu1',
     useTLS: true,
     enableLogging: true,
     // Configure to connect to your LatteStream engine
@@ -29,10 +29,16 @@ app.post('/api/client-token', async (req, res) => {
     }
     
     // Generate client token (secret is already in the LatteStreamServer instance)
-    const clientToken = await lattestream.generateClientToken(
-      userId,
-      ['read', 'write'], // Optional: specify permissions
-      3600 // Optional: 1 hour expiration (default is 30 minutes)
+    const clientToken = await lattestream.authorizeChannel(
+      socket_id,
+      channel_name,
+      {
+        user_id: userId,
+        user_info: {
+          name: user.name,
+          avatar: user.avatar
+        }
+      }
     );
     
     res.json(clientToken);

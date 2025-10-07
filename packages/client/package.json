@@ -15,7 +15,13 @@
   "files": [
     "dist"
   ],
-  "keywords": ["lattestream", "websocket", "realtime", "client", "frontend"],
+  "keywords": [
+    "lattestream",
+    "websocket",
+    "realtime",
+    "client",
+    "frontend"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",

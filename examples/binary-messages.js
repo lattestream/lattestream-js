@@ -7,7 +7,7 @@ const { LatteStream } = require('../packages/client/dist');
 
 // Example usage with your LatteStream client
 const client = new LatteStream('your-app-key-or-token', {
-  wsEndpoint: 'ws-eu1.lattestream.com',
+  wsEndpoint: 'eu1.lattestream.com',
   enableLogging: true,
   // Enhanced reconnection options
   maxReconnectionAttempts: 10,

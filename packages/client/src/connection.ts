@@ -133,8 +133,6 @@ export class Connection {
   }
 
   resetBackoffOnSuccess(): void {
-    // Called when a channel subscription succeeds
-    // This confirms we have a truly working connection
     this.resetReconnectionState();
   }
 
@@ -150,13 +148,7 @@ export class Connection {
     return this.appKeyOrToken.startsWith('lspk_');
   }
 
-  private getAppKey(): string {
-    return this.isToken() ? 'token-based' : this.appKeyOrToken;
-  }
-
   supportsPrivateChannels(): boolean {
-    // Only lspc_ tokens and legacy app keys support private channels
-    // lspk_ public keys are for public channels only
     return !this.isPublicKey();
   }
 
@@ -165,10 +157,8 @@ export class Connection {
 
     this.ws.onopen = () => {
       this.log('WebSocket connected successfully');
-      // Don't reset reconnection state immediately - wait until truly authenticated
 
       if (this.isToken()) {
-        // For token-based authentication, send auth message
         this.sendRaw({ api_key: this.appKeyOrToken });
         if (this.isPrivateToken()) {
           this.log('Sent lspc_ token authentication');
@@ -176,7 +166,6 @@ export class Connection {
           this.log('Sent lspk_ public key authentication');
         }
       } else {
-        // For legacy app key authentication, connection is ready
         this.setState('connected');
       }
     };
@@ -213,12 +202,10 @@ export class Connection {
     try {
       let message: any;
 
-      // Handle binary messages using utility functions
       if (isBinaryMessage(event.data)) {
         this.log('Received binary message, attempting to parse');
         message = await parseBinaryMessage(event.data);
       } else if (typeof event.data === 'string') {
-        // Handle text messages (JSON)
         this.log('Received text message, parsing as JSON');
         message = JSON.parse(event.data);
       } else {
@@ -235,21 +222,18 @@ export class Connection {
         this.log('Connection established with socket ID:', this.socketId);
         this.log('Current state:', this.state, 'Is token:', this.isToken());
 
-        // For token-based auth, set connected state after receiving connection_established
         if (this.isToken() && this.state !== 'connected') {
           this.log('Setting state to connected');
           this.setState('connected');
         } else {
           this.log('NOT setting state to connected - isToken:', this.isToken(), 'current state:', this.state);
         }
-        // Don't forward connection_established to client
         return null;
       } else if (message.event === 'lattestream:pong') {
         this.handlePong();
         // Don't forward pong to client
         return null;
       } else {
-        // Forward all other events (including lattestream_internal: events) to the client
         this.log('Forwarding message event to client:', message.event);
         return message;
       }
@@ -292,35 +276,6 @@ export class Connection {
     this.debouncedReconnect();
   }
 
-  private async checkNetworkConnectivity(): Promise<boolean> {
-    // Check if navigator.onLine is available (browser environment)
-    if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
-      if (!navigator.onLine) {
-        this.log('Network appears to be offline according to navigator.onLine');
-        return false;
-      }
-    }
-
-    // Simple connectivity check using a small HTTP request
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch('https://www.google.com/favicon.ico', {
-        method: 'HEAD',
-        mode: 'no-cors',
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      this.log('Network connectivity check passed');
-      return true;
-    } catch (error) {
-      this.log('Network connectivity check failed:', error);
-      return false;
-    }
-  }
-
   private async attemptReconnect(): Promise<void> {
     const maxAttempts = this.options.maxReconnectionAttempts || 6;
     const maxGap = this.options.maxReconnectGapInSeconds || 30;
@@ -334,23 +289,10 @@ export class Connection {
       return;
     }
 
-    // Check network connectivity before attempting reconnection
-    const isConnected = await this.checkNetworkConnectivity();
-    if (!isConnected) {
-      this.log('Network connectivity check failed, retrying in 10 seconds');
-      this.reconnectTimer = window.setTimeout(() => {
-        this.attemptReconnect();
-      }, 10000);
-      return;
-    }
-
-    // Calculate exponential backoff delay
     const exponentialDelay = Math.pow(backoffMultiplier, this.reconnectAttempts) * baseDelay;
     let delay = Math.min(exponentialDelay, maxGap * 1000);
 
-    // Add jitter to prevent thundering herd problem
     if (enableJitter) {
-      // Add random jitter between 0% and 25% of the delay
       const jitterRange = delay * 0.25;
       const jitter = Math.random() * jitterRange;
       delay = delay + jitter;

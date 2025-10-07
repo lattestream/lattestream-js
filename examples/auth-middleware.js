@@ -45,10 +45,16 @@ app.post('/api/client-token', async (req, res) => {
     }
     
     // Generate client token (secret is already in the LatteStreamServer instance)
-    const clientToken = await lattestream.generateClientToken(
+    const clientToken = await lattestream.authorizeChannel(
       userId || user.id,
-      ['read', 'write'], // Permissions
-      3600 // 1 hour expiration
+      channel_name,
+      {
+        user_id: userId || user.id,
+        user_info: {
+          name: user.name,
+          avatar: user.avatar
+        }
+      }
     );
     
     res.json(clientToken);

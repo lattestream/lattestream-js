@@ -1,14 +1,17 @@
 export class ConnectionPool {
-  private pool = new Map<string, { 
-    controller: AbortController; 
-    lastUsed: number;
-    inUse: boolean;
-  }>();
+  private pool = new Map<
+    string,
+    {
+      controller: AbortController;
+      lastUsed: number;
+      inUse: boolean;
+    }
+  >();
   private readonly maxSize: number;
   private readonly maxAge: number;
   private cleanupTimer: NodeJS.Timeout | null = null;
 
-  constructor(maxSize = 20, maxAge = 300000) { // 5 minutes
+  constructor(maxSize = 20, maxAge = 300_000) {
     this.maxSize = maxSize;
     this.maxAge = maxAge;
     this.startCleanup();
@@ -16,8 +19,8 @@ export class ConnectionPool {
 
   acquire(key: string): AbortController {
     const existing = this.pool.get(key);
-    
-    if (existing && !existing.inUse && (Date.now() - existing.lastUsed) < this.maxAge) {
+
+    if (existing && !existing.inUse && Date.now() - existing.lastUsed < this.maxAge) {
       existing.inUse = true;
       existing.lastUsed = Date.now();
       return existing.controller;
@@ -32,7 +35,7 @@ export class ConnectionPool {
     this.pool.set(key, {
       controller,
       lastUsed: Date.now(),
-      inUse: true
+      inUse: true,
     });
 
     if (this.pool.size > this.maxSize) {
@@ -72,7 +75,7 @@ export class ConnectionPool {
     this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of this.pool.entries()) {
-        if (!entry.inUse && (now - entry.lastUsed) > this.maxAge) {
+        if (!entry.inUse && now - entry.lastUsed > this.maxAge) {
           entry.controller.abort();
           this.pool.delete(key);
         }
@@ -84,11 +87,11 @@ export class ConnectionPool {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
     }
-    
+
     for (const entry of this.pool.values()) {
       entry.controller.abort();
     }
-    
+
     this.pool.clear();
   }
 }
@@ -99,11 +102,7 @@ export class BatchProcessor<T> {
   private readonly batchSize: number;
   private readonly flushInterval: number;
 
-  constructor(
-    private processor: (items: T[]) => Promise<void>,
-    batchSize = 50,
-    flushInterval = 100
-  ) {
+  constructor(private processor: (items: T[]) => Promise<void>, batchSize = 50, flushInterval = 100) {
     this.batchSize = batchSize;
     this.flushInterval = flushInterval;
   }
@@ -127,7 +126,7 @@ export class BatchProcessor<T> {
     if (this.batch.length === 0) return;
 
     const items = this.batch.splice(0);
-    
+
     try {
       await this.processor(items);
     } catch (error) {
@@ -145,43 +144,47 @@ export class BatchProcessor<T> {
 }
 
 export class RequestCache<T> {
-  private cache = new Map<string, {
-    data: T;
-    timestamp: number;
-    promise?: Promise<T>;
-  }>();
+  private cache = new Map<
+    string,
+    {
+      data: T;
+      timestamp: number;
+      promise?: Promise<T>;
+    }
+  >();
   private readonly ttl: number;
 
-  constructor(ttl = 30000) { // 30 seconds
+  constructor(ttl = 30000) {
+    // 30 seconds
     this.ttl = ttl;
   }
 
   async get(key: string, fetcher: () => Promise<T>): Promise<T> {
     const cached = this.cache.get(key);
-    
+
     if (cached) {
       if (Date.now() - cached.timestamp < this.ttl) {
         return cached.data;
       }
-      
+
       if (cached.promise) {
         return cached.promise;
       }
     }
 
     const promise = fetcher();
-    
+
     this.cache.set(key, {
       data: cached?.data as T,
       timestamp: cached?.timestamp || 0,
-      promise
+      promise,
     });
 
     try {
       const data = await promise;
       this.cache.set(key, {
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       return data;
     } catch (error) {
@@ -206,22 +209,22 @@ export function createRetryWrapper<T extends (...args: any[]) => Promise<any>>(
 ): T {
   return (async (...args: Parameters<T>) => {
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await fn(...args);
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt === maxRetries) {
           throw lastError;
         }
-        
+
         const delay = baseDelay * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError!;
   }) as T;
 }
@@ -230,12 +233,13 @@ export class MemoryMonitor {
   private samples: number[] = [];
   private timer: NodeJS.Timeout | null = null;
 
-  start(interval = 10000): void { // 10 seconds
+  start(interval = 10000): void {
+    // 10 seconds
     this.timer = setInterval(() => {
       if (process && process.memoryUsage) {
         const usage = process.memoryUsage();
         this.samples.push(usage.heapUsed);
-        
+
         if (this.samples.length > 100) {
           this.samples.shift();
         }

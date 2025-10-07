@@ -12,11 +12,7 @@ export class LatteStream {
   private globalEventEmitter = new FastEventEmitter();
   private throttledStateChange: (event: ConnectionStateChangeEvent) => void;
 
-  constructor(
-    private appKeyOrToken: string,
-    private options: LatteStreamOptions = {},
-  ) {
-    // Temporarily remove throttle to debug
+  constructor(private appKeyOrToken: string, private options: LatteStreamOptions = {}) {
     this.throttledStateChange = (event: ConnectionStateChangeEvent) => {
       this.log(`[LatteStream Client] directStateChange called: ${event.previous} -> ${event.current}`);
       this.handleConnectionStateChange(event);
@@ -31,10 +27,9 @@ export class LatteStream {
       this.options,
       this.throttledStateChange,
       (message: any, originalEvent: MessageEvent) => {
-        // Connection already parsed the message, just handle it
         this.handleParsedMessage(message);
       },
-      this.handleError.bind(this),
+      this.handleError.bind(this)
     );
   }
 
@@ -73,7 +68,7 @@ export class LatteStream {
             this.log(`[LatteStream] Private channel authorize called for ${name} with socketId ${socketId}`);
             return this.authorizer!.authorize(name, socketId, authOptions);
           },
-          this.options,
+          this.options
         );
         break;
 
@@ -89,7 +84,7 @@ export class LatteStream {
             this.log(`[LatteStream] Presence channel authorize called for ${name} with socketId ${socketId}`);
             return this.authorizer!.authorize(name, socketId, authOptions);
           },
-          this.options,
+          this.options
         );
         break;
 
@@ -100,7 +95,6 @@ export class LatteStream {
 
     this.channels.set(channelName, channel);
 
-    // Always attempt to subscribe immediately - subscribeChannel will handle the connection state check
     this.log(`[LatteStream] Attempting to subscribe to ${channelName}`);
     this.subscribeChannel(channel).catch((error) => {
       this.log(`[LatteStream] Failed to subscribe to ${channelName}:`, error);
@@ -170,12 +164,10 @@ export class LatteStream {
   private handleParsedMessage(message: any): void {
     this.log(`[LatteStream Client] handleParsedMessage received:`, message);
 
-    // Check for channel at top level (standard format) or nested in data (lattestream_internal format)
     const channel = message.channel || (message.data && message.data.channel);
 
     if (channel) {
       this.log(`[LatteStream Client] Routing to handleChannelEvent for channel: ${channel}`);
-      // For lattestream_internal events, create a normalized message format
       const normalizedMessage = {
         ...message,
         channel: channel,
@@ -184,29 +176,6 @@ export class LatteStream {
     } else {
       this.log(`[LatteStream Client] Routing to handleGlobalEvent (no channel property)`);
       this.handleGlobalEvent(message);
-    }
-  }
-
-  // Keep the old method for backward compatibility (not used by Connection anymore)
-  private async handleMessage(event: MessageEvent): Promise<void> {
-    try {
-      let message: any;
-
-      // Handle binary messages using utility functions
-      if (isBinaryMessage(event.data)) {
-        this.log(`[LatteStream Client] Received binary message, attempting to parse`);
-        message = await parseBinaryMessage(event.data);
-      } else if (typeof event.data === 'string') {
-        this.log(`[LatteStream Client] Received text message, parsing as JSON`);
-        message = JSON.parse(event.data);
-      } else {
-        this.log(`[LatteStream Client] Unknown message type:`, typeof event.data);
-        return;
-      }
-
-      this.handleParsedMessage(message);
-    } catch (error) {
-      this.log('Error parsing message:', error);
     }
   }
 
@@ -224,7 +193,6 @@ export class LatteStream {
     ) {
       this.log(`[LatteStream Client] Calling handleSubscriptionSucceeded for channel: ${message.channel}`);
       channel.handleSubscriptionSucceeded(message.data);
-      // Reset exponential backoff on successful subscription - confirms we have a working connection
       this.connection.resetBackoffOnSuccess();
     } else if (
       message.event === 'lattestream:subscription_error' ||
@@ -247,7 +215,6 @@ export class LatteStream {
   }
 
   private parseEventData(data: any): any {
-    // If data is a string that looks like JSON, parse it
     if (typeof data === 'string') {
       const trimmed = data.trim();
       if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
@@ -257,13 +224,11 @@ export class LatteStream {
           return parsed;
         } catch (error) {
           this.log(`[LatteStream Client] Failed to parse JSON data for global event:`, error);
-          // Return original string if parsing fails
           return data;
         }
       }
     }
 
-    // Return data as-is if it's not a JSON string
     return data;
   }
 
@@ -286,7 +251,7 @@ export class LatteStream {
       if (channel.isSubscribed()) {
         this.log(`[LatteStream] Resetting subscription state for channel: ${channel.name}`);
         // @ts-ignore - accessing protected field to reset state
-        (channel as any).subscribed = false;
+        channel.subscribed = false;
       }
     });
   }

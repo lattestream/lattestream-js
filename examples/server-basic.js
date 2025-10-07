@@ -6,7 +6,7 @@ const lattestream = new LatteStreamServer(
   'your-app-key',
   'your-master-key',
   {
-    cluster: 'us-east-1',
+    cluster: 'eu1',
     useTLS: true,
     enableLogging: true
   }

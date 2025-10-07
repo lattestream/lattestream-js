@@ -10,11 +10,11 @@ export class EncryptionHelper {
   generateAuthString(socketId: string, channelName: string, channelData?: string): string {
     const stringToSign = `${socketId}:${channelName}`;
     const finalString = channelData ? `${stringToSign}:${channelData}` : stringToSign;
-    
+
     const hmac = createHmac('sha256', this.masterKey);
     hmac.update(finalString);
     const signature = hmac.digest('hex');
-    
+
     return `${socketId}:${signature}`;
   }
 
@@ -27,7 +27,7 @@ export class EncryptionHelper {
 
       const expectedAuth = this.generateAuthString(socketId, channelName, channelData);
       const [, expectedSignature] = expectedAuth.split(':');
-      
+
       return this.constantTimeCompare(signature, expectedSignature);
     } catch (error) {
       return false;

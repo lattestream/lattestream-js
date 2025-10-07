@@ -4,7 +4,7 @@ import LatteStreamServer, { MemoryMonitor } from '@lattestream/server';
 
 // Client-side performance optimization
 const client = new LatteStream('your-app-key', {
-  cluster: 'us-east-1',
+  cluster: 'eu1',
   forceTLS: true,
   enableLogging: false, // Disable logging in production
   
@@ -49,7 +49,7 @@ function getOrCreateChannel(channelName) {
 
 // Server-side high performance
 const server = new LatteStreamServer('your-app-key', 'your-master-key', {
-  cluster: 'us-east-1',
+  cluster: 'eu1',
   useTLS: true,
   enableLogging: false,
   
@@ -103,7 +103,7 @@ async function triggerHighVolumeEvents() {
 async function loadChannelOnDemand(channelName) {
   const { LazyLatteStream } = await import('@lattestream/client');
   const lazyClient = await LazyLatteStream.createClient('your-app-key', {
-    cluster: 'us-east-1'
+    cluster: 'eu1'
   });
   
   return lazyClient.subscribe(channelName);
