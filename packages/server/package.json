@@ -1,6 +1,6 @@
 {
   "name": "@lattestream/server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LatteStream server SDK for Node.js and Deno",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -37,7 +37,7 @@
   "bugs": {
     "url": "https://github.com/lattestream/lattestream-js/issues"
   },
-  "homepage": "https://github.com/lattestream/lattestream-js#readme",
+  "homepage": "https://github.com/lattestream/lattestream-js/tree/main/packages/server#readme",
   "publishConfig": {
     "access": "public"
   },
