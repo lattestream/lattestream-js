@@ -2,6 +2,9 @@
 
 A powerful, type-safe JavaScript/TypeScript SDK for LatteStream real-time messaging service. This monorepo contains both client-side and server-side SDKs with Pusher-style APIs.
 
+- [JavaScript/TypeScript Client SDK Documentation](./packages/client/README.md)
+- [JavaScript/TypeScript Server SDK Docuemntation](./packages/server/README.md)
+
 ## Features
 
 - **Framework Agnostic**: Works with any JavaScript framework or vanilla JS
