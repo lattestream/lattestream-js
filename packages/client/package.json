@@ -1,6 +1,6 @@
 {
   "name": "@lattestream/client",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "LatteStream client SDK for browsers and frontend frameworks",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -30,13 +30,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lattestream/lattestream-js.git",
+    "url": "https://github.com/lattestream/lattestream-js/tree/main/packages/client#readme",
     "directory": "packages/client"
   },
   "bugs": {
     "url": "https://github.com/lattestream/lattestream-js/issues"
   },
-  "homepage": "https://github.com/lattestream/lattestream-js/tree/main/packages/client#readme",
+  "homepage": "https://lattestream.com",
   "publishConfig": {
     "access": "public"
   },
