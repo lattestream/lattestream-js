@@ -37,16 +37,27 @@ export interface ChannelInfo {
   subscriptionCount: number;
 }
 
+export type WebhookEventType =
+  | 'channel_occupied'
+  | 'channel_vacated'
+  | 'member_added'
+  | 'member_removed'
+  | 'client_event'
+  | 'subscription_count';
+
 export interface WebhookEvent {
+  name: WebhookEventType;
+  channel: string;
+  event: string;
+  data?: string;
+  socketId?: string;
+  userId?: string;
+  subcriptionCount?: number;
+}
+
+export interface WebhookEventPayload {
   timeMs: number;
-  events: Array<{
-    name: string;
-    channel: string;
-    event: string;
-    data?: string;
-    socketId?: string;
-    userId?: string;
-  }>;
+  events: WebhookEvent[];
 }
 
 export interface ServerEvent {

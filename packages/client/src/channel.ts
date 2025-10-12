@@ -1,4 +1,11 @@
-import { EventCallback, ChannelType, PresenceMember, PresenceChannelData, LatteStreamOptions } from './types';
+import {
+  EventCallback,
+  ChannelType,
+  PresenceMember,
+  PresenceChannelData,
+  LatteStreamOptions,
+  ChannelAuthResponse,
+} from './types';
 import { FastEventEmitter, ObjectPool } from './performance';
 
 export abstract class Channel {
@@ -133,7 +140,7 @@ export class PrivateChannel extends Channel {
   constructor(
     name: string,
     send: (data: any) => boolean,
-    protected authorize: (channelName: string, socketId: string) => Promise<string>,
+    protected authorize: (channelName: string, socketId: string) => Promise<ChannelAuthResponse>,
     options: LatteStreamOptions = {}
   ) {
     super(name, send, options);
@@ -153,12 +160,22 @@ export class PrivateChannel extends Channel {
       const authData = await this.authorize(this.name, socketId);
       this.log(`[LatteStream PrivateChannel] Got auth data:`, authData);
 
+      let channel_data;
+
+      if (authData.channel_data) {
+        channel_data = authData.channel_data;
+      }
+
+      const data = {
+        channel: this.name,
+        auth: authData.auth,
+        channel_data,
+      };
+
+      this.log(`[LatteStream PrivateChannel] Sending subscription for ${this.name}:`, data);
       const sent = this.send({
         event: 'lattestream:subscribe',
-        data: {
-          channel: this.name,
-          auth: authData,
-        },
+        data,
       });
 
       if (sent) {
@@ -195,13 +212,22 @@ export class PresenceChannel extends PrivateChannel {
     try {
       const authData = await this.authorize(this.name, socketId);
 
+      let channel_data;
+
+      if (authData.channel_data) {
+        channel_data = authData.channel_data;
+      }
+
+      const data = {
+        channel: this.name,
+        auth: authData.auth,
+        channel_data,
+      };
+
+      this.log(`[LatteStream PresenceChannel] Sending subscription for ${this.name}:`, data);
       this.send({
         event: 'lattestream:subscribe',
-        data: {
-          channel: this.name,
-          auth: authData,
-          channel_data: userData ? JSON.stringify(userData) : undefined,
-        },
+        data,
       });
     } catch (error) {
       this.handleSubscriptionError(error);

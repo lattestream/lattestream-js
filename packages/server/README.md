@@ -189,28 +189,43 @@ console.log(users);
 await server.terminateUserConnections('user-123');
 ```
 
-## Webhook Verification
+## Webhooks
 
-Verify webhook signatures from LatteStream:
+LatteStream can send webhooks to your server for events like channel occupancy changes, client connections, and more. Configure your webhook URL in the LatteStream Dashboard.
+
+### Verifying Webhook Signatures
+
+All webhook requests include an `x-lattestream-signature` header that you should verify to ensure the request came from LatteStream:
 
 ```javascript
-app.post('/webhooks/lattestream', (req, res) => {
-  const signature = req.headers['x-lattestream-signature'];
-  const payload = JSON.stringify(req.body);
+import { verifyWebhookSignature, WebhookEventPayload } from '@lattestream/server';
 
-  if (!server.verifyWebhookSignature(payload, signature)) {
+app.post('/webhooks/lattestream', (req, res) => {
+  const body = req.body;
+  const signature = req.headers['x-lattestream-signature'] as string;
+  const verified = verifyWebhookSignature(
+    body,
+    signature,
+    process.env.LATTESTREAM_WEBHOOK_SECRET as string
+  );
+
+  if (!verified) {
     return res.status(401).send('Invalid signature');
   }
 
-  // Process webhook
-  const events = req.body.events;
-  events.forEach((event) => {
+  // Type-safe webhook payload
+  const payload: WebhookEventPayload = body;
+
+  // Process webhook events
+  payload.events.forEach((event) => {
     console.log(`${event.name} on ${event.channel}`);
   });
 
   res.status(200).send('OK');
 });
 ```
+
+**Important:** Store your webhook secret from the LatteStream Dashboard in `LATTESTREAM_WEBHOOK_SECRET` environment variable.
 
 ## API Reference
 
@@ -237,13 +252,25 @@ new LatteStreamServer(encryptedSecret: string, options?: LatteStreamServerOption
 ### Helper Functions
 
 ```typescript
-import { createChannelAuthMiddleware, ServerAuthorizer, EncryptionHelper, createAuthHelper } from '@lattestream/server';
+import {
+  createChannelAuthMiddleware,
+  ServerAuthorizer,
+  EncryptionHelper,
+  createAuthHelper,
+  verifyWebhookSignature,
+  WebhookEventPayload
+} from '@lattestream/server';
 ```
 
+**Authentication:**
 - `createChannelAuthMiddleware(secret, getUserData?)` - Create Express auth middleware (NOTE: this is NOT encrypted. Recommend to use `authorizeChannel()` instead)
 - `ServerAuthorizer` - Manual authorization class (advanced)
 - `EncryptionHelper` - Encryption utilities (advanced)
 - `createAuthHelper(masterKey)` - Create encryption helper (advanced)
+
+**Webhooks:**
+- `verifyWebhookSignature(body, signature, secret)` - Verify webhook signature from LatteStream
+- `WebhookEventPayload` - TypeScript type for webhook request body
 
 ## Configuration Options
 
@@ -419,6 +446,8 @@ import LatteStreamServer, {
   TriggerEventOptions,
   BatchTriggerEvent,
   ChannelInfo,
+  WebhookEventPayload,
+  verifyWebhookSignature,
 } from '@lattestream/server';
 
 const server: LatteStreamServer = new LatteStreamServer('lsk_secret', {
@@ -433,6 +462,7 @@ const server: LatteStreamServer = new LatteStreamServer('lsk_secret', {
 # .env
 LATTESTREAM_SECRET=lsk_your_encrypted_secret
 LATTESTREAM_CLUSTER=eu1
+LATTESTREAM_WEBHOOK_SECRET=your_webhook_secret_from_dashboard
 ```
 
 ```javascript

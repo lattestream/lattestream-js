@@ -7,7 +7,7 @@ export class Authorizer {
     private options: LatteStreamOptions = {}
   ) {}
 
-  async authorize(channelName: string, socketId: string, authOptions?: AuthOptions): Promise<string> {
+  async authorize(channelName: string, socketId: string, authOptions?: AuthOptions): Promise<ChannelAuthResponse> {
     const options = { ...this.defaultAuthOptions, ...authOptions };
 
     const requestData: any = {
@@ -43,7 +43,10 @@ export class Authorizer {
         throw new Error('Invalid authorization response: missing auth field');
       }
 
-      return authResponse.auth;
+      return {
+        auth: authResponse.auth,
+        channel_data: authResponse.channel_data,
+      };
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Channel authorization failed: ${error.message}`);

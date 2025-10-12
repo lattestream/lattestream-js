@@ -1,5 +1,6 @@
 import { EncryptionHelper } from './encryption';
 import { AuthenticationResult } from './types';
+import crypto from 'crypto';
 
 export class ServerAuthorizer {
   private encryptionHelper: EncryptionHelper;
@@ -131,4 +132,17 @@ export function createChannelAuthMiddleware(appKey: string, masterKey: string, g
       res.status(403).json({ error: message });
     }
   };
+}
+
+export function verifyWebhookSignature(
+  payload: string | Buffer | Record<string, any>,
+  signature: string,
+  secret: string
+): boolean {
+  const expectedSignature =
+    typeof payload === 'string' || Buffer.isBuffer(payload)
+      ? crypto.createHmac('sha256', secret).update(payload).digest('hex')
+      : crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+
+  return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
 }

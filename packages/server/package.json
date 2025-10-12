@@ -1,6 +1,6 @@
 {
   "name": "@lattestream/server",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "LatteStream server SDK for Node.js and Deno",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

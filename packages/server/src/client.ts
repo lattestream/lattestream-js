@@ -198,7 +198,7 @@ export class LatteStreamServer {
       };
 
       if (channelName.startsWith('presence-') && userData) {
-        payload.channel_data = JSON.stringify(userData);
+        payload.channel_data = userData;
       }
 
       const response = await this.makeRequestWithRetry('POST', '/auth', payload);
