@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-06
+
+### Added
+- **@lattestream/client**: Added automatic discovery endpoint integration for public API keys (`lspk_`)
+  - Discovery endpoint is called before WebSocket connection establishment
+  - Implements exponential backoff with jitter for discovery retries (max 3 attempts)
+  - WebSocket endpoint is dynamically built from discovery response: `wss://{cluster}-node{node_id}.lattestream.com`
+  - Discovery token is automatically included in WebSocket connection as query parameter
+  - Localhost support for development environments
+
+### Changed
+- **@lattestream/client**: Connection flow now requires valid token format (`lspc_` or `lspk_`)
+- **@lattestream/client**: Public key connections (`lspk_`) now fail fast if discovery endpoint is unreachable
+- **@lattestream/client**: Improved error messages for invalid API key formats
+
+### Technical Details
+- Discovery endpoint called at: `https://{endpoint}/discover?api_key={publicKey}`
+- WebSocket URL format: `wss://{endpoint}?discovery_token={token}` (for token-based auth)
+- Connection will not proceed without a valid discovery token for public keys
+
 ## [1.1.0] - 2025-10-12
 
 ### Added
@@ -62,8 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added exponential backoff for retries
 - Implemented encryption helpers
 
-[Unreleased]: https://github.com/lattestream/lattestream-js/compare/d84afb6...HEAD
-[1.1.0]: https://github.com/lattestream/lattestream-js/compare/d84afb6...HEAD
+[Unreleased]: https://github.com/lattestream/lattestream-js/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/lattestream/lattestream-js/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/lattestream/lattestream-js/compare/d84afb6...v1.1.0
 [1.0.2]: https://github.com/lattestream/lattestream-js/commit/d84afb6
 [1.0.1]: https://github.com/lattestream/lattestream-js/compare/18bd26b...c4dda17
 [1.0.0]: https://github.com/lattestream/lattestream-js/commit/1e0b4bd
