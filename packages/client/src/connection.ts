@@ -1,6 +1,7 @@
-import { ConnectionState, ConnectionStateChangeEvent, LatteStreamOptions } from './types';
+import { ConnectionState, ConnectionStateChangeEvent, LatteStreamOptions, DiscoveryResponse } from './types';
 import { MessageQueue, PerformanceMonitor, debounce } from './performance';
 import { parseBinaryMessage, isBinaryMessage } from './binary-protocol';
+import { DiscoveryService } from './discovery';
 
 export class Connection {
   private ws: WebSocket | null = null;
@@ -13,6 +14,9 @@ export class Connection {
   private messageQueue: MessageQueue;
   private performanceMonitor: PerformanceMonitor;
   private debouncedReconnect: () => void;
+  private discoveryService: DiscoveryService;
+  private discoveryToken: string | null = null;
+  private discoveryData: DiscoveryResponse | null = null;
 
   constructor(
     private appKeyOrToken: string,
@@ -28,9 +32,16 @@ export class Connection {
       this.options.batchInterval || 16
     );
     this.debouncedReconnect = debounce(() => this.attemptReconnect(), 100);
+    this.discoveryService = new DiscoveryService({
+      maxAttempts: 3,
+      baseDelay: 1000,
+      backoffMultiplier: 2,
+      enableJitter: true,
+      enableLogging: this.options.enableLogging,
+    });
   }
 
-  connect(): void {
+  async connect(): Promise<void> {
     if (this.state === 'connected' || this.state === 'connecting') {
       return;
     }
@@ -38,11 +49,27 @@ export class Connection {
     this.setState('connecting');
     this.clearTimers();
 
-    const protocol = this.options.forceTLS ? 'wss' : 'ws';
-    const endpoint = this.options.wsEndpoint || this.getDefaultEndpoint();
-    const url = this.isToken() ? `${protocol}://${endpoint}` : `${protocol}://${endpoint}/app/${this.appKeyOrToken}`;
-
     try {
+      if (this.isPublicKey()) {
+        await this.performDiscovery();
+
+        if (!this.discoveryToken) {
+          throw new Error('Discovery token required for public key authentication');
+        }
+      }
+
+      if (!this.isToken()) {
+        throw new Error('Invalid API key format. Please use a valid LatteStream token (lspc_ or lspk_)');
+      }
+
+      const protocol = this.options.forceTLS ? 'wss' : 'ws';
+      const endpoint = this.getEndpoint();
+      let url = `${protocol}://${endpoint}`;
+
+      if (this.discoveryToken) {
+        url += `?discovery_token=${this.discoveryToken}`;
+      }
+
       this.ws = new WebSocket(url);
       this.bindEvents();
       this.startActivityTimer();
@@ -380,6 +407,39 @@ export class Connection {
       this.log('Triggering state change callback');
       this.onStateChange({ previous, current: newState });
     }
+  }
+
+  private async performDiscovery(): Promise<void> {
+    const discoveryEndpoint = this.options.wsEndpoint || this.getDefaultEndpoint();
+
+    this.log(`Performing discovery on endpoint: ${discoveryEndpoint}`);
+
+    try {
+      this.discoveryData = await this.discoveryService.discover(this.appKeyOrToken, discoveryEndpoint);
+
+      this.discoveryToken = this.discoveryData.discovery_token;
+
+      this.log('Discovery completed successfully', {
+        node_id: this.discoveryData.node_id,
+        cluster: this.discoveryData.cluster,
+        region: this.discoveryData.region,
+      });
+    } catch (error) {
+      this.log('Discovery failed:', error);
+      throw error;
+    }
+  }
+
+  private getEndpoint(): string {
+    if (this.options.wsEndpoint?.includes('localhost')) {
+      return this.options.wsEndpoint;
+    }
+
+    if (this.discoveryData) {
+      return `${this.discoveryData.cluster}-node${this.discoveryData.node_id}.lattestream.com`;
+    }
+
+    return this.options.wsEndpoint || this.getDefaultEndpoint();
   }
 
   private getDefaultEndpoint(): string {

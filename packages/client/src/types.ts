@@ -61,3 +61,13 @@ export interface LatteStreamEvent {
   data?: any;
   channel?: string;
 }
+
+export interface DiscoveryResponse {
+  node_id: number;
+  region: string;
+  cluster: string;
+  host: string;
+  port: number;
+  discovery_token: string;
+  expires_at: number;
+}
